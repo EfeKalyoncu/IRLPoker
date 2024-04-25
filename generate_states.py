@@ -40,6 +40,11 @@ class BoardState:
         self.adversary_money_owned = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.adversary_money_committed = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+        self.reward_cards_shown = 0
+        self.reward_money_earned = 0
+
+        self.printout_strings = []
+
 def print_board_state(board_state):
     print_list = []
 
@@ -56,10 +61,19 @@ def print_board_state(board_state):
         print_list.append(board_state.adversary_money_owned[i])
         print_list.append(board_state.adversary_money_committed[i])
 
-    print(f"{print_list}")
+    board_state.printout_strings.append(str(print_list))
 
-def print_action(money_amount):
-    print(f"{[money_amount]}")
+def print_action(board_state, money_amount):
+    board_state.printout_strings[-1] += f" & {[money_amount]}"
+
+def print_rewards(board_state, reward_money_won, reward_cards_seen):
+    for i in range(len(board_state.printout_strings)):
+        board_state.printout_strings[i] += f" & [{reward_money_won}, {reward_cards_seen}]"
+
+def print_out(board_state):
+    for line in board_state.printout_strings:
+        print(line)
+    board_state.printout_strings = board_state.printout_strings.clear()
 
 def reconcile_bets(board_state):
     for i in range(len(board_state.adversary_money_committed)):
@@ -80,6 +94,11 @@ def reset_board_state(board_state):
     board_state.adversary_money_owned = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     board_state.adversary_money_committed = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+    board_state.reward_cards_shown = 0
+    board_state.reward_money_earned = 0
+
+    board_state.printout_strings = []
+
 
 board_state = BoardState()
 player_map = {}
@@ -87,10 +106,12 @@ player_location = 0
 
 for line in lines:
     if "Game started at" in line:
+        print_rewards(board_state, board_state.reward_money_earned, board_state.reward_cards_shown)
+        print_out(board_state)
         reset_board_state(board_state)
         player_map.clear()
     if "is the button" in line:
-        board_state.button_location = line[5]
+        board_state.button_location = int(line[5])
     elif "Seat" in line:
         player_map[" ".join(line[8:].split(" ")[:-1])] = int(line[5]) - 1
         board_state.adversary_money_owned[int(line[5]) - 1] = float((line.split(" ")[-1])[1:-3])
@@ -100,6 +121,9 @@ for line in lines:
             if "(" in split_line[-1] and ")" in split_line[-1] and "blind" not in line:
                 money_amount = float(split_line[-1][1:-2])
                 player_no = player_map[" ".join(split_line[1:-2])]
+                if player_no == player_location:
+                    print_board_state(board_state)
+                    print_action(board_state, money_amount)
                 board_state.adversary_money_committed[player_no] += money_amount
                 board_state.adversary_money_owned[player_no] -= money_amount
             elif "(" in split_line[-1] and ")" in split_line[-1]:
@@ -107,16 +131,18 @@ for line in lines:
                 player_no = player_map[" ".join(split_line[1:-4])]
                 if player_no == player_location:
                     print_board_state(board_state)
-                    print_action(money_amount)
+                    print_action(board_state, money_amount)
                 board_state.adversary_money_committed[player_no] += money_amount
                 board_state.adversary_money_owned[player_no] -= money_amount
             elif "folds" in split_line[-1]:
+                money_amount = 0
                 player_no = player_map[" ".join(split_line[1:-1])]
                 if player_no == player_location:
                     print_board_state(board_state)
-                    print_action(money_amount)
+                    print_action(board_state, money_amount)
             if "received card" in line:
                 location = player_map[" ".join(split_line[1:-3])]
+                player_location = location
                 card = split_line[-1][1:-2]
                 suit_marker = card[-1]
                 value_maker = card[:-1]
@@ -127,6 +153,25 @@ for line in lines:
                     board_state.player_card_one = card_value
                 else:
                     board_state.player_card_two = card_value
+            
+            if "shows:" in line:
+                if player_map[" ".join(split_line[1:split_line.index("shows:")])] != player_location:
+                    board_state.reward_cards_shown += 2
+            
+            if "shows:" in line and "Wins" in line:
+                if player_map[" ".join(split_line[1:split_line.index("shows:")])] == player_location:
+                    board_state.reward_money_earned = float(split_line[-1][0:-2])
+            elif "Wins" in line:
+                if "mucks" in line:
+                    if player_map[" ".join(split_line[1:split_line.index("mucks")])] == player_location:
+                        board_state.reward_money_earned = float(split_line[-1][0:-2])
+            elif "Loses" in line:
+                if "mucks" in line:
+                    if player_map[" ".join(split_line[1:split_line.index("mucks")])] == player_location:
+                        board_state.reward_money_earned = -float(split_line[-1][0:-2])
+                elif "does not" in line:
+                    if player_map[" ".join(split_line[1:split_line.index("does")])] == player_location:
+                        board_state.reward_money_earned = -float(split_line[-1][0:-2])
 
         if "*** FLOP ***" in line:
             reconcile_bets(board_state)
@@ -159,3 +204,6 @@ for line in lines:
             number_value = card_value_to_int_value(value_maker)
             card_value = suit_value * 13 + number_value
             board_state.board_data_cards[4] = card_value
+
+print_rewards(board_state, board_state.reward_money_earned, board_state.reward_cards_shown)
+print_out(board_state)
