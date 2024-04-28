@@ -199,8 +199,8 @@ def compare_hands(hand_one, hand_two):
     elif is_pair(hand_one) < is_pair(hand_two):
         return 1
     elif is_pair(hand_one) != 0:
-        top_cards_first = return_highest_cards([0, 1, 2, 3], hand_one, is_pair(hand_one) - 1)
-        top_cards_second = return_highest_cards([0, 1, 2, 3], hand_one, is_pair(hand_one) - 1)
+        top_cards_first = return_highest_cards([0, 1, 2, 3], hand_one, [is_pair(hand_one) - 1])
+        top_cards_second = return_highest_cards([0, 1, 2, 3], hand_one, [is_pair(hand_one) - 1])
         return judge_high_card(top_cards_first, top_cards_second)
     else:
         top_cards_first = return_highest_cards([0, 1, 2, 3], hand_one)
@@ -212,6 +212,9 @@ class card:
     def __init__(self, suite, number):
         self.suite = suite
         self.number = number
+    
+    def __str__(self):
+        return f"{self.number}|{self.suite}"
 
 
 class game_state:
