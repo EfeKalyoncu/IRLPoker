@@ -16,6 +16,7 @@ class PokerGame:
         self.players_in_hand = 0
         self.players_agreed_on_pot = 0
 
+        self.state_action_reward_buffer = []
         self.cards_on_board = []
         self.deck = []
         
@@ -39,6 +40,24 @@ class PokerGame:
         
         return -1
     
+    def get_vectorized_state(self):
+        state = []
+
+        for i in range(len(self.cards_on_board)):
+            state.append(self.cards_on_board[i])
+        state.append(self.pot)
+
+        state.append(self.button_location)
+        state.append(self.player_hands[self.action_position][0])
+        state.append(self.player_hands[self.action_position][1])
+        state.append(self.action_position)
+
+        for i in range(len(self.player_capital)):
+            state.append(self.player_capital[i])
+            state.append(self.player_pot_commitment[i])
+        
+        return state
+
     def aggregate_to_pot(self):
         for i in range(self.num_players):
             self.pot += self.player_pot_commitment[i]
@@ -50,9 +69,14 @@ class PokerGame:
     def reconcile_bets(self):
         best_hand = []
         best_player_location = []
+        hands_seen = 0
+        player_hand_seen = []
         for i in range(self.num_players):
             if len(self.player_hands[i]) == 0:
-                continue
+                player_hand_seen.append(0)
+            else:
+                player_hand_seen.append(2)
+                hands_seen += 2
             curhand = []
             for j in range(len(self.cards_on_board)):
                 curhand.append(self.cards_on_board[j])
@@ -72,6 +96,10 @@ class PokerGame:
                 elif comparison_result == -1:
                     best_player_location.append(i)
         
+        for i in range(len(self.state_action_reward_buffer)):
+            player_reward = self.state_action_reward_buffer[i][0][9]
+            # self.state_action_reward_buffer[i][2] = [, hands_seen - player_hand_seen[self.state_action_reward_buffer[i][0][9]]]
+
         for i in range(len(best_player_location)):
             self.player_capital[best_player_location[i]] += self.pot / len(best_player_location)
         
@@ -146,6 +174,7 @@ class PokerGame:
             return_list.append(self.player_pot_commitment[i])
     
     def execute_action(self, action):
+        state_action_reward = [self.get_vectorized_state, [action], [0, 0]]
         bet_needed = self.current_bet - self.player_pot_commitment[self.action_position]
         min_raise = self.current_bet * 2 - self.player_pot_commitment[self.action_position]
         if action >= self.player_capital[self.action_position]:
@@ -171,8 +200,10 @@ class PokerGame:
             self.current_bet = self.player_pot_commitment[self.action_position] + action
             self.players_agreed_on_pot = 1
         
+        state_action_reward[1] = [action]
         self.player_pot_commitment[self.action_position] += action
         self.player_capital[self.action_position] -= action
+        self.state_action_reward_buffer.append(state_action_reward)
         
         if self.players_in_hand == self.players_agreed_on_pot:
             if len(self.cards_on_board) == 0:
@@ -190,7 +221,7 @@ class PokerGame:
         else:
             self.action_position = self.find_next_action_location(self.action_position)
         
-        return 0
+        return 0, []
     
     def ask_action(self):
         print([str(x) for x in self.player_hands[self.action_position]])
