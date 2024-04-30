@@ -167,6 +167,7 @@ class PokerGame:
         self.action_position = action_player
         self.current_bet = self.minimum_bet * 2
         returnBuffer = self.state_action_reward_buffer
+        self.state_action_reward_buffer = []
 
         return 0, returnBuffer
         
