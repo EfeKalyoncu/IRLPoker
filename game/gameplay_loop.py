@@ -190,6 +190,8 @@ class PokerGame:
             return_list.append(self.player_pot_commitment[i])
     
     def execute_action(self, action):
+        if action < 0:
+            action = 0
         state_action_reward = [self.get_vectorized_state(), [action], [self.player_capital_soh[self.action_position], 0]]
         bet_needed = self.current_bet - self.player_pot_commitment[self.action_position]
         min_raise = self.current_bet * 2 - self.player_pot_commitment[self.action_position]
@@ -200,7 +202,7 @@ class PokerGame:
                 self.players_agreed_on_pot = 1
             else:
                 self.players_agreed_on_pot += 1
-        elif action < bet_needed or action < 0:
+        elif action < bet_needed:
             action = 0
             self.deck.append(self.player_hands[self.action_position][0])
             self.deck.append(self.player_hands[self.action_position][1])
