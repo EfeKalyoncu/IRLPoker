@@ -200,7 +200,7 @@ class PokerGame:
                 self.players_agreed_on_pot = 1
             else:
                 self.players_agreed_on_pot += 1
-        elif action < bet_needed:
+        elif action < bet_needed or action < 0:
             action = 0
             self.deck.append(self.player_hands[self.action_position][0])
             self.deck.append(self.player_hands[self.action_position][1])
