@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch.distributions.utils import _standard_normal
 from torch import distributions as pyd
 
+def to_torch(xs, device):
+    return tuple(torch.as_tensor(x, device=device) for x in xs)
 def weight_init(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)

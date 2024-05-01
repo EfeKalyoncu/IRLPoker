@@ -5,19 +5,21 @@ import random
 from actor import Actor
 from critic import Critic
 import torch
-import torch.functional as F
+import torch.nn.functional as F
+import utils
 
 GLOBAL_STEPS = 10
 TRAINING_STEPS = 1000
 EVALUATION_HANDS = 1000
 
 class PokerTrainer:
-    def __init__(self, num_players=4, batch_size=32, lr = 0.01):
+    def __init__(self, num_players=4, batch_size=32, lr = 0.01, device = "cpu"):
         #initialization for the game
         self.num_players = num_players
         self.game = PokerGame(num_players=num_players)
         self.buffer = ReplayBuffer()
         self.lr = lr
+        self.device = device
 
         #train loop datafields instantiations
         self.batch_size = batch_size
@@ -57,7 +59,7 @@ class PokerTrainer:
         self.total_eval_rewards = 0
         self.eval_batch = []
         self.game = PokerGame(num_players=self.num_players)   
-        while self.eval_hands < 1000:
+        while self.eval_hands < EVALUATION_HANDS:
             #start game                       
             #Play
             if self.game.action_position == 0: #if position indicates current model
@@ -68,9 +70,9 @@ class PokerTrainer:
                 action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
                 done, self.eval_batch = self.game.execute_action(action)
             
-            print(self.eval_batch,done, action)
+            # print(self.eval_batch,done, action)
             if self.eval_batch != []:
-                print("Hi Batch not empty\n")
+                # print("Hi Batch not empty\n")
                 #when the batch is not empty accumulate rewards
                 for state, action, reward in self.eval_batch:
                     self.total_eval_rewards += reward[0]
@@ -81,6 +83,7 @@ class PokerTrainer:
                 self.game = PokerGame(num_players=self.num_players)   
         
         self.eval_progress()
+        self.eval_hands = 0
         
             
 
@@ -95,15 +98,13 @@ class PokerTrainer:
             #for 10000 or what ever is the most recent game end...
             while self.train_steps < TRAINING_STEPS:
                 action = self.choose_action(self.actor, state)[0]
-                print(f'action: {action}')
+                # print(f'action: {action}')
                 done, batch = self.game.execute_action(action)
                 #if batch is not empty
                 #add to the buffer
                 if batch:
                     for state, action, reward in batch:
                         self.buffer.add(state, action, reward, done)    
-                    self.log_progress()
-
                 if done:
                     # Start a new instance of Poker Game if only one person has the money
                     self.game = PokerGame(num_players=self.num_players)
@@ -114,12 +115,15 @@ class PokerTrainer:
                 #increase the counter 
                 self.train_steps += 1
             
+            
+            self.train_steps = 0
+            self.global_step += 1
             #eval current and old model, then old model becomes new model
             self.eval()
             #update the agent
             self.update()
             # Logging 
-            
+            self.log_progress()
             
 
 
@@ -136,8 +140,7 @@ class PokerTrainer:
         
     def update_critic(self, states, actions, rewards):
         Q , _= self.critic(states, actions)
-
-        critic_loss = F.mse_loss(Q, rewards[0])
+        critic_loss = F.mse_loss(Q, rewards[:,:1])
         self.critic_opt.zero_grad()
         critic_loss.backward()
         self.critic_opt.step()
@@ -145,7 +148,7 @@ class PokerTrainer:
 
     def update(self):
         #get sample from replay_buffer
-        states, actions, rewards, dones = self.buffer.sample(self.batch_size)
+        states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
         
         #update critic
         self.update_critic(states, actions, rewards)
