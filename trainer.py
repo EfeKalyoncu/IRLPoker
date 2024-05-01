@@ -9,12 +9,12 @@ import torch.nn.functional as F
 import utils
 import copy
 
-GLOBAL_STEPS = 10
+GLOBAL_STEPS = 100
 TRAINING_STEPS = 100000
 EVALUATION_HANDS = 100
 
 class PokerTrainer:
-    def __init__(self, num_players=4, batch_size=2, lr = 0.01, device = "cpu"):
+    def __init__(self, num_players=4, batch_size=2, lr = 0.1, device = "cpu"):
         #initialization for the game
         self.num_players = num_players
         self.game = PokerGame(num_players=num_players)
@@ -98,14 +98,18 @@ class PokerTrainer:
             
             #for 10000 or what ever is the most recent game end...
             while self.train_steps < TRAINING_STEPS:
-                action = self.choose_action(self.actor, state)[0]
+                if self.game.action_position == 0:
+                    action = self.choose_action(self.actor, state)[0]
+                else:
+                    action = self.choose_action(self.adversary, state)[0]
                 # print(f'action: {action}')
                 done, batch = self.game.execute_action(action)
                 #if batch is not empty
                 #add to the buffer
                 if batch:
                     for state, action, reward in batch:
-                        self.buffer.add(state, action, reward, done)    
+                        if state[8] == 0:
+                            self.buffer.add(state, action, reward, done)    
                 if done:
                     # Start a new instance of Poker Game if only one person has the money
                     self.game = PokerGame(num_players=self.num_players)
@@ -123,7 +127,7 @@ class PokerTrainer:
             #eval current and old model, then old model becomes new model
             self.eval()
             #update the agent
-            if self.global_step % 50 == 0:
+            if self.global_step % 10 == 0:
                 self.adversary.load_state_dict(copy.deepcopy(self.actor.state_dict()))
             self.update()
             
@@ -153,7 +157,7 @@ class PokerTrainer:
 
     def update(self):
         #get sample from replay_buffer
-        for i in range(1000):
+        for i in range(10000):
             states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
             states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
             #update critic
@@ -163,10 +167,14 @@ class PokerTrainer:
             self.update_actor(states)
 
     def log_progress(self):
-        print(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}\n\n\n")
-
+        print(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}\n\n")
+        with open('output_log1.txt', 'a') as file:
+            file.write(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}\n")
+    
     def eval_progress(self):
         print(f"Step: {self.global_step}, Eval Rewards: {self.total_eval_rewards}")
+        with open('output_log1.txt', 'a') as file:
+            file.write(f"Step: {self.global_step}, Eval Rewards: {self.total_eval_rewards}\n")
 
 # Main execution
 trainer = PokerTrainer()
