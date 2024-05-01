@@ -133,7 +133,7 @@ class PokerGame:
         return self.init_hand()
 
     def init_hand(self):
-        self.button_location = (self.button_location + 1) % 9
+        self.button_location = (self.button_location + 1) % self.num_players
         self.player_capital_soh = copy.deepcopy(self.player_capital)
         for i in range(self.num_players):
             if self.player_capital[i] >= self.minimum_bet * 2:
@@ -162,6 +162,7 @@ class PokerGame:
                     action_player = cur_player_no
                     break
         
+        # print(action_player)
         if blinds_put_in < 2:
             return -1, []
         self.action_position = action_player
@@ -243,13 +244,13 @@ class PokerGame:
         return 0, []
     
     def ask_action(self):
-        print([str(x) for x in self.player_hands[self.action_position]])
-        print([str(x) for x in self.cards_on_board])
-        print(f"Position: {self.action_position}")
-        print(f"Bid: {self.current_bet}")
-        print(f"Currently Committed: {self.player_pot_commitment[self.action_position]}")
-        print(f"Current Pot: {self.pot}")
-        print(f"Current Money: {self.player_capital[self.action_position]}")
-        a = float(input("--------------------------\n"))
-        print(a)
-        return a
+        # print([str(x) for x in self.player_hands[self.action_position]])
+        # print([str(x) for x in self.cards_on_board])
+        # print(f"Position: {self.action_position}")
+        # print(f"Bid: {self.current_bet}")
+        # print(f"Currently Committed: {self.player_pot_commitment[self.action_position]}")
+        # print(f"Current Pot: {self.pot}")
+        # print(f"Current Money: {self.player_capital[self.action_position]}")
+        # a = float(input())
+        # print(a)
+        return 0
