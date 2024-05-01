@@ -7,10 +7,11 @@ from critic import Critic
 import torch
 import torch.nn.functional as F
 import utils
+import copy
 
-GLOBAL_STEPS = 100
+GLOBAL_STEPS = 10
 TRAINING_STEPS = 10000
-EVALUATION_HANDS = 10
+EVALUATION_HANDS = 100
 
 class PokerTrainer:
     def __init__(self, num_players=4, batch_size=2, lr = 0.01, device = "cpu"):
@@ -30,7 +31,7 @@ class PokerTrainer:
 
         #Actor parameter instantiation
         self.stddev = 15 
-        self.hidden_dim = 256 #experiement with this value
+        self.hidden_dim = 512 #experiement with this value
         self.action_shape = 1
         self.actor = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
         self.adversary = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
@@ -122,8 +123,8 @@ class PokerTrainer:
             #eval current and old model, then old model becomes new model
             self.eval()
             #update the agent
-            if self.global_step % 2 == 0:
-                self.adversary = self.actor
+            if self.global_step % 50 == 0:
+                self.adversary.load_state_dict(copy.deepcopy(self.actor.state_dict()))
             self.update()
             
             # Logging 
@@ -152,13 +153,14 @@ class PokerTrainer:
 
     def update(self):
         #get sample from replay_buffer
-        states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
-        states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
-        #update critic
-        self.update_critic(states, actions, rewards)
+        for i in range(10000):
+            states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
+            states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
+            #update critic
+            self.update_critic(states, actions, rewards)
 
-        #update actor
-        self.update_actor(states)
+            #update actor
+            self.update_actor(states)
 
     def log_progress(self):
         print(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}\n\n\n")

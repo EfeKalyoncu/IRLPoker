@@ -6,6 +6,8 @@ class ReplayBuffer:
         self.buffer = []
     
     def add(self, state, action, reward, done):
+        if len(self.buffer) > 1000000:
+            self.buffer = self.buffer[50000:]
         self.buffer.append([state, action, reward, done])
     
     def sample(self, batch_size): #to sample from the buffer

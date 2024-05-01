@@ -15,6 +15,8 @@ class Actor(nn.Module):
 									nn.ReLU(inplace=True),
                                     nn.Linear(2*hidden_dim, hidden_dim),
 									nn.ReLU(inplace=True),
+									nn.Linear(hidden_dim, hidden_dim),
+                                    nn.ReLU(inplace=True),
 									nn.Linear(hidden_dim, action_shape))
 
         self.apply(utils.weight_init)
