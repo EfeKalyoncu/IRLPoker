@@ -4,7 +4,7 @@ import numpy as np
 import copy
 
 class PokerGame:
-    def __init__(self, num_players=9):
+    def __init__(self, num_players=2):
         self.player_capital = []
         self.player_hands = []
         self.player_pot_commitment = []
@@ -24,7 +24,7 @@ class PokerGame:
         self.deck = []
         
 
-        for suite in range (4):
+        for suite in range (2):
             for card_number in range(13):
                 self.deck.append(gs.card(suite, card_number))
         
@@ -53,7 +53,7 @@ class PokerGame:
 
         for i in range(len(self.cards_on_board)):
             state.append(self.card_value_calculate(self.cards_on_board[i]))
-        for i in range(5 - len(self.cards_on_board)):
+        for i in range(4 - len(self.cards_on_board)):
             state.append(-1)
         state.append(self.pot)
 
@@ -112,7 +112,7 @@ class PokerGame:
         
         for i in range(len(self.state_action_reward_buffer)):
             # The player that should receive the reward
-            player_reward = self.state_action_reward_buffer[i][0][9]
+            player_reward = self.state_action_reward_buffer[i][0][8]
             self.state_action_reward_buffer[i][2] = [self.player_capital[player_reward] - self.state_action_reward_buffer[i][2][0], hands_seen - player_hand_seen[player_reward]]
 
         
@@ -121,7 +121,7 @@ class PokerGame:
         self.players_in_hand = 0
         self.players_agreed_on_pot = 0
         self.action_position = -1
-        for i in range(5):
+        for i in range(4):
             self.deck.append(self.cards_on_board.pop())
         
         for i in range(self.num_players):
@@ -140,7 +140,8 @@ class PokerGame:
                 self.player_hands[i] = (self.deck.pop(), self.deck.pop())
                 self.players_in_hand += 1
         
-        for i in range(5):
+        
+        for i in range(4):
             self.cards_reserved.append(self.deck.pop())
         
         action_player = -1
@@ -175,7 +176,7 @@ class PokerGame:
     def get_state_for_current_player(self):
         return_list = []
 
-        for i in range(5):
+        for i in range(4):
             if i >= len(self.cards_on_board):
                 return_list.append(-1)
             else:
@@ -231,7 +232,7 @@ class PokerGame:
                     self.cards_on_board.append(self.cards_reserved.pop())
                 self.action_position = self.find_next_action_location(self.button_location)
                 self.aggregate_to_pot()
-            elif len(self.cards_on_board) < 5:
+            elif len(self.cards_on_board) < 4:
                 self.cards_on_board.append(self.cards_reserved.pop())
                 self.action_position = self.find_next_action_location(self.button_location)
                 self.aggregate_to_pot()

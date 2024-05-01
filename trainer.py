@@ -10,7 +10,7 @@ import utils
 import copy
 
 GLOBAL_STEPS = 10
-TRAINING_STEPS = 10000
+TRAINING_STEPS = 100000
 EVALUATION_HANDS = 100
 
 class PokerTrainer:
@@ -31,7 +31,7 @@ class PokerTrainer:
 
         #Actor parameter instantiation
         self.stddev = 15 
-        self.hidden_dim = 512 #experiement with this value
+        self.hidden_dim = 128 #experiement with this value
         self.action_shape = 1
         self.actor = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
         self.adversary = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
@@ -75,7 +75,7 @@ class PokerTrainer:
                 #when the batch is not empty accumulate rewards
                 self.eval_hands += 1
                 for state, action, reward in self.eval_batch:
-                    if state[9] == 0:
+                    if state[8] == 0:
                         self.total_eval_rewards += reward[0]
                         break
                 # print(self.total_eval_rewards)
@@ -153,7 +153,7 @@ class PokerTrainer:
 
     def update(self):
         #get sample from replay_buffer
-        for i in range(10000):
+        for i in range(1000):
             states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
             states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
             #update critic
