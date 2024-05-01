@@ -14,8 +14,8 @@ class Actor(nn.Module):
 									nn.Linear(hidden_dim, 2*hidden_dim),
 									nn.ReLU(inplace=True),
                                     nn.Linear(2*hidden_dim, hidden_dim),
-									nn.ReLU(inplace=True),
-									nn.Linear(hidden_dim, hidden_dim),
+									# nn.ReLU(inplace=True),
+									# nn.Linear(hidden_dim, hidden_dim),
                                     nn.ReLU(inplace=True),
 									nn.Linear(hidden_dim, action_shape))
 

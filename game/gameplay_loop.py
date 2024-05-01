@@ -25,7 +25,7 @@ class PokerGame:
         
 
         for suite in range (2):
-            for card_number in range(13):
+            for card_number in range(8):
                 self.deck.append(gs.card(suite, card_number))
         
         random.shuffle(self.deck)
