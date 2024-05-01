@@ -14,9 +14,9 @@ def return_highest_cards(suites, all_cards, guaranteed_cards=[]):
                     highest_five_cards.sort(key=lambda x: x.number, reverse=True)
                 else:
                     continue
-    if highest_five_cards[0].number > 15:
+    if highest_five_cards[0].number >= 15:
         for card in highest_five_cards:
-            if card.number > 15:
+            if card.number >= 15:
                 card.number = int(card.number / 15) - 1
         
     return highest_five_cards
@@ -63,6 +63,8 @@ def is_quads(all_cards):
     numbers = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     for card in all_cards:
+        if card.number > 12:
+            print(card.number)
         numbers[card.number] += 1
     
     for i in range(13):
@@ -148,14 +150,14 @@ def compare_hands(hand_one, hand_two):
     elif is_quads(hand_one) == is_quads(hand_two) and is_quads(hand_one) > 0:
         top_five_first = return_highest_cards([0, 1, 2, 3], hand_one)
         top_five_second = return_highest_cards([0, 1, 2, 3], hand_two)
-        if top_five_first[0] > top_five_second[0]:
+        if top_five_first[0].number > top_five_second[0].number:
             return 0
-        elif top_five_first[0] < top_five_second[0]:
+        elif top_five_first[0].number < top_five_second[0].number:
             return 1
         else:
-            if top_five_first[4] > top_five_second[4]:
+            if top_five_first[4].number > top_five_second[4].number:
                 return 0
-            elif top_five_first[4] < top_five_second[4]:
+            elif top_five_first[4].number < top_five_second[4].number:
                 return 1
             else:
                 return -1
@@ -200,11 +202,11 @@ def compare_hands(hand_one, hand_two):
         return 1
     elif is_pair(hand_one) != 0:
         top_cards_first = return_highest_cards([0, 1, 2, 3], hand_one, [is_pair(hand_one) - 1])
-        top_cards_second = return_highest_cards([0, 1, 2, 3], hand_one, [is_pair(hand_one) - 1])
+        top_cards_second = return_highest_cards([0, 1, 2, 3], hand_two, [is_pair(hand_two) - 1])
         return judge_high_card(top_cards_first, top_cards_second)
     else:
         top_cards_first = return_highest_cards([0, 1, 2, 3], hand_one)
-        top_cards_second = return_highest_cards([0, 1, 2, 3], hand_one)
+        top_cards_second = return_highest_cards([0, 1, 2, 3], hand_two)
         return judge_high_card(top_cards_first, top_cards_second)
 
 
