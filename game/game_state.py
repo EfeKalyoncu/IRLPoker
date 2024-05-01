@@ -17,7 +17,7 @@ def return_highest_cards(suites, all_cards, guaranteed_cards=[]):
     if highest_five_cards[0].number > 15:
         for card in highest_five_cards:
             if card.number > 15:
-                card.number = card.number / 15 - 1
+                card.number = int(card.number / 15) - 1
         
     return highest_five_cards
 
