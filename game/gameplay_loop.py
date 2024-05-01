@@ -41,7 +41,7 @@ class PokerGame:
         return card.suite * 100 + card.number
 
     def find_next_action_location(self, starting_point):
-        for i in range(self.num_players - 1):
+        for i in range(self.num_players):
             cur_player_no = (i + starting_point + 1) % self.num_players
             if len(self.player_hands[cur_player_no]) != 0:
                 return cur_player_no
@@ -222,7 +222,6 @@ class PokerGame:
         state_action_reward[1] = [action]
         self.player_pot_commitment[self.action_position] += action
         self.player_capital[self.action_position] -= action
-        print(state_action_reward)
         self.state_action_reward_buffer.append(state_action_reward)
         
         if self.players_in_hand == self.players_agreed_on_pot:
