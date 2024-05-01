@@ -8,12 +8,12 @@ import torch
 import torch.nn.functional as F
 import utils
 
-GLOBAL_STEPS = 1
-TRAINING_STEPS = 1
-EVALUATION_HANDS = 25
+GLOBAL_STEPS = 100
+TRAINING_STEPS = 10000
+EVALUATION_HANDS = 10
 
 class PokerTrainer:
-    def __init__(self, num_players=4, batch_size=32, lr = 0.01, device = "cpu"):
+    def __init__(self, num_players=4, batch_size=2, lr = 0.01, device = "cpu"):
         #initialization for the game
         self.num_players = num_players
         self.game = PokerGame(num_players=num_players)
@@ -29,7 +29,7 @@ class PokerTrainer:
         self.total_eval_rewards = 0 
 
         #Actor parameter instantiation
-        self.stddev = 5 
+        self.stddev = 15 
         self.hidden_dim = 256 #experiement with this value
         self.action_shape = 1
         self.actor = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
@@ -60,33 +60,27 @@ class PokerTrainer:
         self.eval_batch = []
         self.game = PokerGame(num_players=self.num_players)   
         while self.eval_hands < EVALUATION_HANDS:
-            done, self.eval_batch = self.game.execute_action(0)
             #start game                       
             #Play
-            # if self.game.action_position == 0: #if position indicates current model
-            #     action = self.eval_action(self.actor, self.game.get_vectorized_state())[0]
-            #     done, self.eval_batch = self.game.execute_action(action)
+            if self.game.action_position == 0: #if position indicates current model
+                action = self.eval_action(self.actor, self.game.get_vectorized_state())[0]
+                done, self.eval_batch = self.game.execute_action(action)
 
-            # else: #else adversary model plays
-            #     action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
-            #     done, self.eval_batch = self.game.execute_action(action)
+            else: #else adversary model plays
+                action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
+                done, self.eval_batch = self.game.execute_action(action)
             
             if self.eval_batch != []:
                 #when the batch is not empty accumulate rewards
                 self.eval_hands += 1
-                print("~~~~~", self.game.action_position)
-                # for state, action, reward in self.eval_batch:
-                #     if (reward[0] == 0 and state[9] == 0):
-                #         print(state, action, reward)
-                #         print(reward[0])
-                #     if state[9] == 0:
-                #         self.total_eval_rewards += reward[0]
-                #         break
-                # self.eval_hands +=1
+                for state, action, reward in self.eval_batch:
+                    if state[9] == 0:
+                        self.total_eval_rewards += reward[0]
+                        break
+                # print(self.total_eval_rewards)
 
-            # if done != 0:
-            #     print("HA")
-            #     self.game = PokerGame(num_players=self.num_players)   
+            if done != 0:
+                self.game = PokerGame(num_players=self.num_players)   
         
         self.eval_progress()
         self.eval_hands = 0
@@ -104,7 +98,7 @@ class PokerTrainer:
             #for 10000 or what ever is the most recent game end...
             while self.train_steps < TRAINING_STEPS:
                 action = self.choose_action(self.actor, state)[0]
-                # print(f'action: {action}')
+                print(f'action: {action}')
                 done, batch = self.game.execute_action(action)
                 #if batch is not empty
                 #add to the buffer
@@ -124,10 +118,14 @@ class PokerTrainer:
             
             self.train_steps = 0
             self.global_step += 1
+
             #eval current and old model, then old model becomes new model
             self.eval()
             #update the agent
+            if self.global_step % 2 == 0:
+                self.adversary = self.actor
             self.update()
+            
             # Logging 
             self.log_progress()
             
@@ -155,7 +153,7 @@ class PokerTrainer:
     def update(self):
         #get sample from replay_buffer
         states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
-        
+        states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
         #update critic
         self.update_critic(states, actions, rewards)
 
@@ -163,7 +161,7 @@ class PokerTrainer:
         self.update_actor(states)
 
     def log_progress(self):
-        print(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}")
+        print(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}\n\n\n")
 
     def eval_progress(self):
         print(f"Step: {self.global_step}, Eval Rewards: {self.total_eval_rewards}")
