@@ -70,13 +70,12 @@ class PokerTrainer:
                 action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
                 done, self.eval_batch = self.game.execute_action(action)
             
-            # print(self.eval_batch,done, action)
             if self.eval_batch != []:
-                # print("Hi Batch not empty\n")
                 #when the batch is not empty accumulate rewards
                 for state, action, reward in self.eval_batch:
-                    self.total_eval_rewards += reward[0]
-                    
+                    if state[9] == 0:
+                        self.total_eval_rewards += reward[0]
+                        break
                 self.eval_hands +=1
 
             if done != 0:
