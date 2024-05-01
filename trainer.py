@@ -8,9 +8,9 @@ import torch
 import torch.nn.functional as F
 import utils
 
-GLOBAL_STEPS = 10
-TRAINING_STEPS = 1000
-EVALUATION_HANDS = 1000
+GLOBAL_STEPS = 1
+TRAINING_STEPS = 1
+EVALUATION_HANDS = 25
 
 class PokerTrainer:
     def __init__(self, num_players=4, batch_size=32, lr = 0.01, device = "cpu"):
@@ -60,26 +60,33 @@ class PokerTrainer:
         self.eval_batch = []
         self.game = PokerGame(num_players=self.num_players)   
         while self.eval_hands < EVALUATION_HANDS:
+            done, self.eval_batch = self.game.execute_action(0)
             #start game                       
             #Play
-            if self.game.action_position == 0: #if position indicates current model
-                action = self.eval_action(self.actor, self.game.get_vectorized_state())[0]
-                done, self.eval_batch = self.game.execute_action(action)
+            # if self.game.action_position == 0: #if position indicates current model
+            #     action = self.eval_action(self.actor, self.game.get_vectorized_state())[0]
+            #     done, self.eval_batch = self.game.execute_action(action)
 
-            else: #else adversary model plays
-                action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
-                done, self.eval_batch = self.game.execute_action(action)
+            # else: #else adversary model plays
+            #     action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
+            #     done, self.eval_batch = self.game.execute_action(action)
             
             if self.eval_batch != []:
                 #when the batch is not empty accumulate rewards
-                for state, action, reward in self.eval_batch:
-                    if state[9] == 0:
-                        self.total_eval_rewards += reward[0]
-                        break
-                self.eval_hands +=1
+                self.eval_hands += 1
+                print("~~~~~", self.game.action_position)
+                # for state, action, reward in self.eval_batch:
+                #     if (reward[0] == 0 and state[9] == 0):
+                #         print(state, action, reward)
+                #         print(reward[0])
+                #     if state[9] == 0:
+                #         self.total_eval_rewards += reward[0]
+                #         break
+                # self.eval_hands +=1
 
-            if done != 0:
-                self.game = PokerGame(num_players=self.num_players)   
+            # if done != 0:
+            #     print("HA")
+            #     self.game = PokerGame(num_players=self.num_players)   
         
         self.eval_progress()
         self.eval_hands = 0
