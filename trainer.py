@@ -124,15 +124,11 @@ class PokerTrainer:
 
 
     def update_actor(self, states):
-
         dist = self.actor(states, self.stddev)
         actions = dist.sample()
-        log_prob = dist.log_prob(actions).sum(-1, keepdim=True)
-
         Q, _ = self.critic(states, actions)
 
         actor_loss = -torch.mean(Q)
-
         self.actor_opt.zero_grad()
         actor_loss.backward()
         self.actor_opt.step()
@@ -142,7 +138,6 @@ class PokerTrainer:
         Q , _= self.critic(states, actions)
 
         critic_loss = F.mse_loss(Q, rewards[0])
-
         self.critic_opt.zero_grad()
         critic_loss.backward()
         self.critic_opt.step()
