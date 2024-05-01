@@ -18,12 +18,13 @@ class Actor(nn.Module):
 									nn.Linear(hidden_dim, action_shape))
 
         self.apply(utils.weight_init)
+        self.relu = nn.ReLU()
 
     def forward(self, obs, std):
         # TODO: Define the forward pass
-        mu = torch.tanh(self.policy(obs))
+        mu = self.relu(self.policy(obs))
 
-        std = torch.ones_like(mu) * std
+        std = torch.ones_like(mu, dtype= float) * std
         dist = utils.TruncatedNormal(mu, std)
         return dist
 

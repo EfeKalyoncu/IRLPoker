@@ -6,7 +6,7 @@ class ReplayBuffer:
         self.buffer = []
     
     def add(self, state, action, reward, done):
-        self.buffer.append((state, action, reward, done))
+        self.buffer.append([state, action, reward, done])
     
     def sample(self, batch_size): #to sample from the buffer
         sample_size = min(len(self.buffer), batch_size)

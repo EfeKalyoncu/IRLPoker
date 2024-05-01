@@ -19,7 +19,7 @@ class Critic(nn.Module):
 
     def forward(self, obs, action):
         # Hint: Pass the state and action through the network and return the Q value
-        input = torch.cat((obs,action), dim = 1)
+        input = torch.cat((obs.float(),action.float()), dim = 1)
         output = self.network(input)
 
         q =  self.Q(output)

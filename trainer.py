@@ -98,7 +98,7 @@ class PokerTrainer:
             #for 10000 or what ever is the most recent game end...
             while self.train_steps < TRAINING_STEPS:
                 action = self.choose_action(self.actor, state)[0]
-                print(f'action: {action}')
+                # print(f'action: {action}')
                 done, batch = self.game.execute_action(action)
                 #if batch is not empty
                 #add to the buffer
