@@ -60,6 +60,10 @@ def print_board_state(board_state):
     for i in range(len(board_state.adversary_money_owned)):
         print_list.append(board_state.adversary_money_owned[i])
         print_list.append(board_state.adversary_money_committed[i])
+        if board_state.adversary_money_committed[i] > 0 or i < board_state.button_location or i < board_state.player_location:
+            print_list.append(1)
+        else:
+            print_list.append(0)
 
     board_state.printout_strings.append(str(print_list))
 

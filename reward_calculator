@@ -1,0 +1,56 @@
+import game.gameplay_loop as gl
+import trainer
+import torch
+import numpy as np
+import random
+from scipy.optimize import minimize
+
+trainer = trainer.PokerTrainer(9)
+
+file1 = open('human_input.txt', 'r')
+lines = file1.readlines()
+
+human_sar_buffer = []
+reward_diff_buffer = []
+
+for line in lines:
+    human_sar_buffer.append([[float(y) for y in x.strip()[1:-1].split(",")] for x in line.strip().split("&")])
+
+
+for i in range(len(human_sar_buffer)):
+    action_location = int(human_sar_buffer[i][0][9])
+    player_money = human_sar_buffer[i][0][9 + action_location * 3]
+    cumulative_reward = [0, 0]
+    dist = trainer.actor(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), 5)
+    for i in range(10):
+        action = dist.sample()
+        Q, info = trainer.critic(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), action)
+        cumulative_reward[0] += Q.item()
+        cumulative_reward[1] += info.item()
+    cumulative_reward = np.array(cumulative_reward)
+    cumulative_reward /= 10
+    q, info = trainer.critic(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), torch.Tensor(human_sar_buffer[i][1]).unsqueeze(0))
+    expert_rewards = np.array([Q.item(), info.item()])
+    reward_diff = expert_rewards - cumulative_reward
+    reward_diff_buffer.append(reward_diff)
+
+print(reward_diff_buffer)
+
+def reward_function(multipliers):
+    a = multipliers[0]
+    b = multipliers[1]
+    reward_one = 0
+    reward_two = 0
+    for reward_diff in reward_diff_buffer:
+        multiplier_one = 1
+        multiplier_two = 1
+        if reward_diff[0] < 0:
+            multiplier_one = -1
+        if reward_diff[1] < 0:
+            multiplier_two = -1
+        reward_one -= a * multiplier_one * reward_diff[0] * reward_diff[0]
+        reward_two -= b * multiplier_two * reward_diff[0] * reward_diff[0]
+    return reward_one + reward_two
+
+initial_guess = [1,0]
+print(minimize(reward_function, initial_guess))
