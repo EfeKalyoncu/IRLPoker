@@ -17,7 +17,7 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 class TruncatedNormal(pyd.Normal):
-    def __init__(self, loc, scale, low=0, high=500, eps=1e-6):
+    def __init__(self, loc, scale, low=0, high=1, eps=1e-6):
         super().__init__(loc, scale, validate_args=False)
         self.low = low
         self.high = high

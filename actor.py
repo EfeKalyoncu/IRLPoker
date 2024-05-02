@@ -14,17 +14,18 @@ class Actor(nn.Module):
 									nn.Linear(hidden_dim, 2*hidden_dim),
 									nn.ReLU(inplace=True),
                                     nn.Linear(2*hidden_dim, hidden_dim),
-									# nn.ReLU(inplace=True),
-									# nn.Linear(hidden_dim, hidden_dim),
+									nn.ReLU(inplace=True),
+									nn.Linear(hidden_dim, hidden_dim),
                                     nn.ReLU(inplace=True),
 									nn.Linear(hidden_dim, action_shape))
 
         self.apply(utils.weight_init)
         self.relu = nn.ReLU()
+        self.sig = nn.Sigmoid()
 
     def forward(self, obs, std):
         # TODO: Define the forward pass
-        mu = self.relu(self.policy(obs))
+        mu = self.sig(self.policy(obs))
 
         std = torch.ones_like(mu, dtype= float) * std
         dist = utils.TruncatedNormal(mu, std)

@@ -30,7 +30,7 @@ class PokerTrainer:
         self.total_eval_rewards = 0 
 
         #Actor parameter instantiation
-        self.stddev = 15 
+        self.stddev = 0.2
         self.hidden_dim = 128 #experiement with this value
         self.action_shape = 1
         self.actor = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
@@ -69,7 +69,7 @@ class PokerTrainer:
 
             else: #else adversary model plays
                 # action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
-                action = random.uniform(0, 100)
+                action = random.uniform(0, 1)
                 done, self.eval_batch = self.game.execute_action(action)
             
             if self.eval_batch != []:

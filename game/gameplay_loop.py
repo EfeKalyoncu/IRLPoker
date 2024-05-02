@@ -205,6 +205,7 @@ class PokerGame:
         if action < 0:
             action = 0
         
+        action = self.player_capital[self.action_position] * action
             
         state_action_reward = [self.get_vectorized_state(), [action], [self.player_capital_soh[self.action_position], 0]]
         bet_needed = self.current_bet - self.player_pot_commitment[self.action_position]
