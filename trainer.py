@@ -10,11 +10,11 @@ import utils
 import copy
 
 GLOBAL_STEPS = 100
-TRAINING_STEPS = 10000
+TRAINING_STEPS = 1000
 EVALUATION_HANDS = 100
 
 class PokerTrainer:
-    def __init__(self, num_players=2, batch_size=2, lr = 0.00001, device = "cpu"):
+    def __init__(self, num_players=2, batch_size=2, lr = 0.01, device = "cpu"):
         #initialization for the game
         self.num_players = num_players
         self.game = PokerGame(num_players=num_players)
@@ -30,12 +30,13 @@ class PokerTrainer:
         self.total_eval_rewards = 0 
 
         #Actor parameter instantiation
-        self.stddev = 0.2
+        self.stddev = 0.05
         self.hidden_dim = 128 #experiement with this value
         self.action_shape = 1
+        self.critic_loss = 0
         self.actor = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
         self.adversary = Actor( repr_dim= len(self.game.get_vectorized_state()), action_shape= self.action_shape, hidden_dim=self.hidden_dim)
-        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=self.lr)
+        self.actor_opt = torch.optim.SGD(self.actor.parameters(), lr=self.lr)
 
         #Critic parameter instantion
         self.critic = Critic(repr_dim = len(self.game.get_vectorized_state()),action_shape= self.action_shape, hidden_dim=self.hidden_dim)
@@ -46,13 +47,21 @@ class PokerTrainer:
     def choose_action(self, agent, state):
         #get an action from our actor
         state = torch.Tensor(state)
-        dist = agent(state, self.stddev)
+        if agent == self.adversary:
+            dist = agent(state, 0.05)
+        else:
+            dist = agent(state, self.stddev)
         action = dist.sample()
         return action.detach().numpy() if isinstance(action, torch.Tensor) else action
     
     def eval_action(self,agent,state):
         state = torch.Tensor(state)
-        dist = agent(state, self.stddev)
+        if agent == self.adversary:
+            with torch.no_grad():
+                dist = agent(state, 0.05)
+        else:
+            dist = agent(state, self.stddev)
+            # print(dist.mean)
         action = dist.mean
         return action.detach().numpy() if isinstance(action, torch.Tensor) else action
     
@@ -68,8 +77,11 @@ class PokerTrainer:
                 done, self.eval_batch = self.game.execute_action(action)
 
             else: #else adversary model plays
-                # action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
-                action = random.uniform(0, 1)
+                if self.global_step < 50:
+                    with torch.no_grad():
+                        action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
+                else:
+                    action = PokerGame.ask_action(self.game)
                 done, self.eval_batch = self.game.execute_action(action)
             
             if self.eval_batch != []:
@@ -84,6 +96,8 @@ class PokerTrainer:
             if done != 0:
                 self.game = PokerGame(num_players=self.num_players)   
         
+        print(self.critic_loss)
+        self.critic_loss = 0
         self.eval_progress()
         self.eval_hands = 0
         
@@ -151,6 +165,7 @@ class PokerTrainer:
     def update_critic(self, states, actions, rewards):
         Q , _= self.critic(states, actions)
         critic_loss = F.mse_loss(Q, rewards[:,:1])
+        self.critic_loss += critic_loss.item()
         self.critic_opt.zero_grad()
         critic_loss.backward()
         self.critic_opt.step()
@@ -158,7 +173,7 @@ class PokerTrainer:
 
     def update(self):
         #get sample from replay_buffer
-        for i in range(10000):
+        for i in range(5000):
             states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
             states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
             #update critic

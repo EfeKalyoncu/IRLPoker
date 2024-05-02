@@ -67,14 +67,22 @@ class PokerGame:
         state.append(self.pot)
 
         state.append(self.button_location)
-        state = state + self.card_value_calculate(self.player_hands[self.action_position][0])
-        state = state + self.card_value_calculate(self.player_hands[self.action_position][1])
+
+        for i in range(len(self.player_hands)):
+            num = (i + self.action_position) % self.num_players
+            if len(self.player_hands[num]) > 0:
+                state = state + self.card_value_calculate(self.player_hands[num][0])
+                state = state + self.card_value_calculate(self.player_hands[num][1])
+            else:
+                state = state + self.card_value_calculate(fakeCard)
+                state = state + self.card_value_calculate(fakeCard)
         
 
         for i in range(len(self.player_capital)):
-            state.append(self.player_capital[i])
-            state.append(self.player_pot_commitment[i])
-            state.append(len(self.player_hands[i]) / 2)
+            num = (i + self.action_position) % self.num_players
+            state.append(self.player_capital[num])
+            state.append(self.player_pot_commitment[num])
+            state.append(len(self.player_hands[num]) / 2)
         
         return state
 
@@ -210,7 +218,8 @@ class PokerGame:
         state_action_reward = [self.get_vectorized_state(), [action], [self.player_capital_soh[self.action_position], 0]]
         bet_needed = self.current_bet - self.player_pot_commitment[self.action_position]
         min_raise = self.current_bet * 2 - self.player_pot_commitment[self.action_position]
-        if action > self.player_capital[self.action_position] + 10:
+        if action > self.player_capital[self.action_position] - 10:
+            state_action_reward[2] = [1000, 0]
             if self.players_in_hand != 1:
                 action = 0
                 self.deck.append(self.player_hands[self.action_position][0])
@@ -271,13 +280,13 @@ class PokerGame:
         return 0, []
     
     def ask_action(self):
-        # print([str(x) for x in self.player_hands[self.action_position]])
-        # print([str(x) for x in self.cards_on_board])
-        # print(f"Position: {self.action_position}")
-        # print(f"Bid: {self.current_bet}")
-        # print(f"Currently Committed: {self.player_pot_commitment[self.action_position]}")
-        # print(f"Current Pot: {self.pot}")
-        # print(f"Current Money: {self.player_capital[self.action_position]}")
-        # a = float(input())
-        # print(a)
-        return 0
+        print([str(x) for x in self.player_hands[self.action_position]])
+        print([str(x) for x in self.cards_on_board])
+        print(f"Position: {self.action_position}")
+        print(f"Bid: {self.current_bet}")
+        print(f"Currently Committed: {self.player_pot_commitment[self.action_position]}")
+        print(f"Current Pot: {self.pot}")
+        print(f"Current Money: {self.player_capital[self.action_position]}")
+        a = float(input())
+        print(a)
+        return a

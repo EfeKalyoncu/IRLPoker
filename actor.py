@@ -25,7 +25,9 @@ class Actor(nn.Module):
 
     def forward(self, obs, std):
         # TODO: Define the forward pass
-        mu = self.sig(self.policy(obs))
+        mu = self.relu(self.policy(obs))
+        mu = self.sig(mu)
+        #print(mu)
 
         std = torch.ones_like(mu, dtype= float) * std
         dist = utils.TruncatedNormal(mu, std)
