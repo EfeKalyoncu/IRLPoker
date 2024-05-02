@@ -38,7 +38,14 @@ class PokerGame:
         self.init_hand()
     
     def card_value_calculate(self, card):
-        return card.suite * 100 + card.number
+        returnArray = []
+        for i in range(2):
+            for j in range(8):
+                if card.suite == i and card.number == j:
+                    returnArray.append(1)
+                else:
+                    returnArray.append(0)
+        return returnArray
 
     def find_next_action_location(self, starting_point):
         for i in range(self.num_players):
@@ -49,18 +56,20 @@ class PokerGame:
         return -1
     
     def get_vectorized_state(self):
+        fakeCard = gs.card(10, 10)
         state = []
 
+        state.append(self.action_position)
         for i in range(len(self.cards_on_board)):
-            state.append(self.card_value_calculate(self.cards_on_board[i]))
+            state = state + self.card_value_calculate(self.cards_on_board[i])
         for i in range(4 - len(self.cards_on_board)):
-            state.append(-1)
+            state = state + self.card_value_calculate(fakeCard)
         state.append(self.pot)
 
         state.append(self.button_location)
-        state.append(self.card_value_calculate(self.player_hands[self.action_position][0]))
-        state.append(self.card_value_calculate(self.player_hands[self.action_position][1]))
-        state.append(self.action_position)
+        state = state + self.card_value_calculate(self.player_hands[self.action_position][0])
+        state = state + self.card_value_calculate(self.player_hands[self.action_position][1])
+        
 
         for i in range(len(self.player_capital)):
             state.append(self.player_capital[i])
@@ -112,7 +121,7 @@ class PokerGame:
         
         for i in range(len(self.state_action_reward_buffer)):
             # The player that should receive the reward
-            player_reward = self.state_action_reward_buffer[i][0][8]
+            player_reward = self.state_action_reward_buffer[i][0][0]
             self.state_action_reward_buffer[i][2] = [self.player_capital[player_reward] - self.state_action_reward_buffer[i][2][0], hands_seen - player_hand_seen[player_reward]]
 
         
@@ -195,10 +204,26 @@ class PokerGame:
     def execute_action(self, action):
         if action < 0:
             action = 0
+        
+            
         state_action_reward = [self.get_vectorized_state(), [action], [self.player_capital_soh[self.action_position], 0]]
         bet_needed = self.current_bet - self.player_pot_commitment[self.action_position]
         min_raise = self.current_bet * 2 - self.player_pot_commitment[self.action_position]
-        if action >= self.player_capital[self.action_position]:
+        if action > self.player_capital[self.action_position] + 10:
+            if self.players_in_hand != 1:
+                action = 0
+                self.deck.append(self.player_hands[self.action_position][0])
+                self.deck.append(self.player_hands[self.action_position][1])
+                self.player_hands[self.action_position] = ()
+                self.players_in_hand -= 1
+            else:
+                action = self.player_capital[self.action_position]
+                if action > self.current_bet:
+                    self.current_bet = action
+                    self.players_agreed_on_pot = 1
+                else:
+                    self.players_agreed_on_pot += 1
+        elif action >= self.player_capital[self.action_position]:
             action = self.player_capital[self.action_position]
             if action > self.current_bet:
                 self.current_bet = action

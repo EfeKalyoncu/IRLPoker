@@ -10,11 +10,11 @@ import utils
 import copy
 
 GLOBAL_STEPS = 100
-TRAINING_STEPS = 100000
+TRAINING_STEPS = 10000
 EVALUATION_HANDS = 100
 
 class PokerTrainer:
-    def __init__(self, num_players=4, batch_size=2, lr = 0.1, device = "cpu"):
+    def __init__(self, num_players=2, batch_size=2, lr = 0.00001, device = "cpu"):
         #initialization for the game
         self.num_players = num_players
         self.game = PokerGame(num_players=num_players)
@@ -68,14 +68,15 @@ class PokerTrainer:
                 done, self.eval_batch = self.game.execute_action(action)
 
             else: #else adversary model plays
-                action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
+                # action = self.eval_action(self.adversary, self.game.get_vectorized_state())[0]
+                action = random.uniform(0, 100)
                 done, self.eval_batch = self.game.execute_action(action)
             
             if self.eval_batch != []:
                 #when the batch is not empty accumulate rewards
                 self.eval_hands += 1
                 for state, action, reward in self.eval_batch:
-                    if state[8] == 0:
+                    if state[0] == 0:
                         self.total_eval_rewards += reward[0]
                         break
                 # print(self.total_eval_rewards)
@@ -108,7 +109,7 @@ class PokerTrainer:
                 #add to the buffer
                 if batch:
                     for state, action, reward in batch:
-                        if state[8] == 0:
+                        if state[0] == 0:
                             self.buffer.add(state, action, reward, done)    
                 if done:
                     # Start a new instance of Poker Game if only one person has the money
