@@ -38,4 +38,6 @@ We then figure out the rewards for each action of the agent using the critic mod
 
 We pair each reward that the agent got, with the reward of the expert, and set up Advantage of the expert Adv = a * ($ExpReward^2$ - $AgentReward^2$).
 
-Lastly we do linear programming to maximize Adv with the variables in vector a.
+Lastly we do linear programming to maximize Adv with the variables in vector a. Then the reward function normalized based on l1 norm.
+
+![alt text](images/RewardCalculator.png "Reward Calculations")
