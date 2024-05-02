@@ -150,6 +150,7 @@ class PokerGame:
         return self.init_hand()
 
     def init_hand(self):
+        random.shuffle(self.deck)
         self.button_location = (self.button_location + 1) % self.num_players
         self.player_capital_soh = copy.deepcopy(self.player_capital)
         for i in range(self.num_players):
@@ -281,6 +282,7 @@ class PokerGame:
     
     def ask_action(self):
         print([str(x) for x in self.player_hands[self.action_position]])
+        print([str(x) for x in self.player_hands[0]])
         print([str(x) for x in self.cards_on_board])
         print(f"Position: {self.action_position}")
         print(f"Bid: {self.current_bet}")
