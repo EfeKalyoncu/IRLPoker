@@ -20,21 +20,18 @@ for line in lines:
 for i in range(len(human_sar_buffer)):
     action_location = int(human_sar_buffer[i][0][9])
     player_money = human_sar_buffer[i][0][9 + action_location * 3]
-    cumulative_reward = [0, 0]
+    expert_q, expert_info = trainer.critic(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), torch.Tensor(human_sar_buffer[i][1]).unsqueeze(0))
+    expert_rewards = np.array([expert_q.item(), expert_info.item()])
     dist = trainer.actor(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), 5)
     for i in range(10):
+        sample_reward = [0, 0]
         action = dist.sample()
-        Q, info = trainer.critic(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), action)
-        cumulative_reward[0] += Q.item()
-        cumulative_reward[1] += info.item()
-    cumulative_reward = np.array(cumulative_reward)
-    cumulative_reward /= 10
-    q, info = trainer.critic(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), torch.Tensor(human_sar_buffer[i][1]).unsqueeze(0))
-    expert_rewards = np.array([Q.item(), info.item()])
-    reward_diff = expert_rewards - cumulative_reward
-    reward_diff_buffer.append(reward_diff)
-
-print(reward_diff_buffer)
+        q, info = trainer.critic(torch.Tensor(human_sar_buffer[i][0]).unsqueeze(0), action)
+        sample_reward[0] += q.item()
+        sample_reward[1] += info.item()
+        sample_reward = np.array(sample_reward)
+        reward_diff = expert_rewards - sample_reward
+        reward_diff_buffer.append(reward_diff)
 
 def reward_function(multipliers):
     a = multipliers[0]
@@ -53,4 +50,6 @@ def reward_function(multipliers):
     return reward_one + reward_two
 
 initial_guess = [1,0]
-print(minimize(reward_function, initial_guess))
+minimizer = minimize(reward_function, initial_guess)
+norm = [float(i)/sum(minimizer['x']) for i in minimizer['x']]
+print(norm)
