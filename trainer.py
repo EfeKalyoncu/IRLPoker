@@ -10,11 +10,11 @@ import utils
 import copy
 
 GLOBAL_STEPS = 100
-TRAINING_STEPS = 1000
+TRAINING_STEPS = 20000
 EVALUATION_HANDS = 100
 
 class PokerTrainer:
-    def __init__(self, num_players=2, batch_size=2, lr = 0.01, device = "cpu"):
+    def __init__(self, num_players=2, batch_size=2, lr = 0.0001, device = "cpu"):
         #initialization for the game
         self.num_players = num_players
         self.game = PokerGame(num_players=num_players)
@@ -74,6 +74,7 @@ class PokerTrainer:
             #Play
             if self.game.action_position == 0: #if position indicates current model
                 action = self.eval_action(self.actor, self.game.get_vectorized_state())[0]
+                print(action)
                 done, self.eval_batch = self.game.execute_action(action)
 
             else: #else adversary model plays
@@ -142,7 +143,7 @@ class PokerTrainer:
             #eval current and old model, then old model becomes new model
             self.eval()
             #update the agent
-            if self.global_step % 10 == 0:
+            if self.global_step % 50 == 0:
                 self.adversary.load_state_dict(copy.deepcopy(self.actor.state_dict()))
             self.update()
             
@@ -173,14 +174,15 @@ class PokerTrainer:
 
     def update(self):
         #get sample from replay_buffer
-        for i in range(5000):
+        for i in range(100000):
             states, actions, rewards, dones = utils.to_torch(self.buffer.sample(self.batch_size), self.device)
             states, actions, rewards, dones = states.float(), actions.float(), rewards.float(), dones
             #update critic
             self.update_critic(states, actions, rewards)
 
             #update actor
-            self.update_actor(states)
+            if i % 20 == 0:
+                self.update_actor(states)
 
     def log_progress(self):
         print(f"Step: {self.global_step}, Buffer Size: {len(self.buffer)}\n\n")

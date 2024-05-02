@@ -25,7 +25,7 @@ class Actor(nn.Module):
 
     def forward(self, obs, std):
         # TODO: Define the forward pass
-        mu = self.relu(self.policy(obs))
+        mu = self.policy(obs)
         mu = self.sig(mu)
         #print(mu)
 

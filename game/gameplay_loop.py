@@ -211,8 +211,8 @@ class PokerGame:
             return_list.append(self.player_pot_commitment[i])
     
     def execute_action(self, action):
-        if action < 0:
-            action = 0
+        if action < 0.1:
+            action = 1.5
         
         action = self.player_capital[self.action_position] * action
             
