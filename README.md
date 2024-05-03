@@ -84,6 +84,8 @@ This is another issues that we faced where the Actor would be likely to be very 
 
 Best strategy being all in for an extended period of time put large upward pressure to the predicted action, causing the predictions to go towards infinity before any card informations could be learned.
 
+To make things more complicated, because reward of the actions fundamentally depend on other actors actions, and in case other actors fold, the reward function for the action current agent takes will also be flat.
+
 ### Banning All ins is impossible
 
 This was an unexpected issue that we got, however seeing it was quite magical. All in is a move in poker that guarantees that one can play in a hand even from a money disadvantage. The issue with banning all in actions in any way is that the actors quickly learned that if they at any point had money advantage, they could repeatedly make aggressive bets, and put the opposition to a situation where they could not accept the bid amount without going all in. So any agent with a money disadvantage would be forced to concede everything. Because of this starting from first hand, both actors would repeatedly bet at fisrt round. 
