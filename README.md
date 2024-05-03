@@ -78,7 +78,7 @@ As mentioned above state space was very large. This maent that it was impossible
 
 Designing the action space was non-trivial. A portion of what the action space meant was baked into the engine we used to simulate the game. However exactly how the action space would be conveyed to the game engine would substantially change the behaviour of the underlying agent. As an example, spreading the action space such that it is hard to call all in would make it so the agent would highly value high bets, even if the hand was not good.
 
-### Most samples contating too little information
+### Most samples containing too little information
 
 This is another issues that we faced where the Actor would be likely to be very set on all inning because for a player with no information it is the highest expected value play. In particular, an all in would have the expected value of 0, whereas a fold would have an expected value of either -2 or -4, meaning that before the relationships of the cards are learned, only trajectory that is sampled are all ins. 
 
@@ -93,3 +93,5 @@ We have observed this style of gameplay when we played against the agent ourselv
 ### Rewards should be designed to guide gradients
 
 As mentioned above we had to ensure that agents had some cushion to ensure the game did not become a game of chicken against the all in amount. However allowing actions to go below 0, and above the total amount of money, and considering them legal bets created rewards to be comepletely flat beyond those points, so the algorithms would not get gradients because change in the action would not affect the rewards. Therefore we needed to add punishment to values that were not within the [0-MaxMoney] range, we added negative rewards that had gradients that would guide the actor towards the correct range.
+
+![alt text](images/RewardDistribution.png "Reward Distribution based on Action")
