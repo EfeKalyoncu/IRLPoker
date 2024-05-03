@@ -103,3 +103,31 @@ We have observed this style of gameplay when we played against the agent ourselv
 As mentioned above we had to ensure that agents had some cushion to ensure the game did not become a game of chicken against the all in amount. However allowing actions to go below 0, and above the total amount of money, and considering them legal bets created rewards to be comepletely flat beyond those points, so the algorithms would not get gradients because change in the action would not affect the rewards. Therefore we needed to add punishment to values that were not within the [0-MaxMoney] range, we added negative rewards that had gradients that would guide the actor towards the correct range.
 
 ![alt text](images/RewardDistribution.png "Reward Distribution based on Action")
+
+## Future Work
+
+### Autoencoder
+
+Adding an autoencoder to reduce the size of the state space, as well as normalizing it could improve the performance. Our state space was naturally very sparse because of the one hot encoded cards. Also most of the real values that were in the state vector had information relating them. Proportional differences are meant to be comparably important which an encoder would be able to capture.
+
+### Pretraining the Critic
+
+The training of the Actor was heavily relian on the Critic. Whereas the training of the Critic could be more independent. The main goal of the Critic is the guess the reward associated with a state, which is stochastic, however sampling of the states could be done with a uniform distribution of actions. So before we start training the Actor and use it to train the Critic, we could do supervised training with the Critic so that the starting point of the Critic network is close enough to the real reward distribution that the backpropogation of the Actor networks gradients are more accurate (since Actor network also relies on Critic netowrk).
+
+### Decoupling Actor and Critic training
+
+The fact that the actor and critic trained at the same time, while being highly reliant on each other meant that bad outcomes from the networks got exaggerated by each other causing divergence. To handle this the sections where the data was sampled to train actor and critic couold be decoupled, and the training of the networks could also be decoupled. So we could:
+
+1. Sample for Critic
+2. Train Critic on the sampled data
+3. Sample for Actor using the Critic that is trained
+4. Train the Actor using the newly sampled data
+5. Go gack to 1
+
+### Further normalization
+
+We have normalized the action space to improve the performance, but we could further normalize the rewards and the states. The state normalization could also be handled by an autoencoder, however we could simply define rewards to be a function of the starting capital of a player in the hand, which could stabilize the training process.
+
+### Architecture of the Actor model
+
+For the actor model we used a simple fully connected Actor model. However if we actually wanted to make full use of a reward function that rewards different aspects of the game, having a part of the model train off of the loss of only one aspect of the reward could enable us to use more sophisticated models that make use of latent inputs.
