@@ -48,6 +48,10 @@ Lastly we do linear programming to maximize Adv with the variables in vector a. 
 
 ![alt text](images/RewardCalculator.png "Reward Calculations")
 
+![alt text](images/ExpertRewardDistribution.png "Expert Reward Distribution based on Action")
+
+![alt text](images/AgentRewardDistribution.png "Agent Reward Distribution based on Action")
+
 ### Implementation of Agent with Actor-Critic
 
 1. Initialize Actor and Critic Networks.
