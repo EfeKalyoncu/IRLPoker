@@ -4,7 +4,7 @@ import numpy as np
 import copy
 
 class PokerGame:
-    def __init__(self, num_players=9):
+    def __init__(self, num_players=4):
         self.player_capital = []
         self.player_hands = []
         self.player_pot_commitment = []
@@ -36,6 +36,7 @@ class PokerGame:
             self.player_hands.append(())
         
         self.init_hand()
+        
     
     def card_value_calculate(self, card):
         return card.suite * 100 + card.number
@@ -55,16 +56,27 @@ class PokerGame:
             state.append(self.card_value_calculate(self.cards_on_board[i]))
         for i in range(5 - len(self.cards_on_board)):
             state.append(-1)
-        state.append(self.pot)
+        state.append(self.pot / 100)
 
         state.append(self.button_location)
+        if len(self.player_hands[self.action_position]) == 0:
+            if self.init_hand() != -1:
+                self.__init__()
+                return self.get_vectorized_state()
+            else:
+                for i in range(len(self.player_capital)):
+                    self.player_capital[i] = 100
+                    self.player_capital_soh[i] = 0
+                    self.player_pot_commitment[i] = 0
+                self.init_hand()
+                return self.get_vectorized_state()
         state.append(self.card_value_calculate(self.player_hands[self.action_position][0]))
         state.append(self.card_value_calculate(self.player_hands[self.action_position][1]))
         state.append(self.action_position)
 
         for i in range(len(self.player_capital)):
-            state.append(self.player_capital[i])
-            state.append(self.player_pot_commitment[i])
+            state.append(self.player_capital[i] / 100)
+            state.append(self.player_pot_commitment[i] / 100)
             state.append(len(self.player_hands[i]) / 2)
         
         return state
@@ -136,6 +148,19 @@ class PokerGame:
         self.button_location = (self.button_location + 1) % self.num_players
         self.player_capital_soh = copy.deepcopy(self.player_capital)
         for i in range(self.num_players):
+            if len(self.player_hands[i]) != 0:
+                self.deck.append(self.player_hands[i][0])
+                self.deck.append(self.player_hands[i][1])
+                self.player_hands[i] = ()
+        
+        for i in range(len(self.cards_on_board)):
+            self.deck.append(self.cards_on_board.pop())
+        
+        for i in range(len(self.cards_reserved)):
+            self.deck.append(self.cards_reserved.pop())
+        
+        random.shuffle(self.deck)
+        for i in range(self.num_players):
             if self.player_capital[i] >= self.minimum_bet * 2:
                 self.player_hands[i] = (self.deck.pop(), self.deck.pop())
                 self.players_in_hand += 1
@@ -163,7 +188,7 @@ class PokerGame:
                     break
         
         # print(action_player)
-        if blinds_put_in < 2:
+        if blinds_put_in < 2 or action_player == -1:
             return -1, []
         self.action_position = action_player
         self.current_bet = self.minimum_bet * 2
@@ -205,11 +230,14 @@ class PokerGame:
             else:
                 self.players_agreed_on_pot += 1
         elif action < bet_needed:
-            action = 0
-            self.deck.append(self.player_hands[self.action_position][0])
-            self.deck.append(self.player_hands[self.action_position][1])
-            self.player_hands[self.action_position] = ()
-            self.players_in_hand -= 1
+            if self.players_in_hand == 1:
+                action = 0
+            else:
+                action = 0
+                self.deck.append(self.player_hands[self.action_position][0])
+                self.deck.append(self.player_hands[self.action_position][1])
+                self.player_hands[self.action_position] = ()
+                self.players_in_hand -= 1
         elif action < self.minimum_bet:
             action = 0
             self.players_agreed_on_pot += 1
@@ -230,10 +258,14 @@ class PokerGame:
                 for i in range(3):
                     self.cards_on_board.append(self.cards_reserved.pop())
                 self.action_position = self.find_next_action_location(self.button_location)
+                if self.action_position == -1:
+                    return -1, []
                 self.aggregate_to_pot()
             elif len(self.cards_on_board) < 5:
                 self.cards_on_board.append(self.cards_reserved.pop())
                 self.action_position = self.find_next_action_location(self.button_location)
+                if self.action_position == -1:
+                    return -1, []
                 self.aggregate_to_pot()
             else:
                 self.aggregate_to_pot()
@@ -253,4 +285,4 @@ class PokerGame:
         # print(f"Current Money: {self.player_capital[self.action_position]}")
         # a = float(input())
         # print(a)
-        return 0
+        return random.uniform(-10, 300)
